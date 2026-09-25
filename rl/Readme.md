@@ -1,3 +1,4 @@
+```text
 post training(source : Natasha Jaques lecture on Youtube, https://www.youtube.com/watch?v=_9FltLLOOVE)
   -problem with naive rl fine tuning
     -catastrophic forgetting
@@ -17,5 +18,5 @@ How to learn the reward function:
 
   -p_hat[p1>p2] = exp(sum_r_hat_(output_1_t,answer_1_t))/ (exp_sum_r_hat_(o_1_t,a_1_t) + exp_sum_r_hat_(o_2_t,a_2_t))
     - learn r_hat by minimizing ce between predictions and human labels.
-
+```
   
