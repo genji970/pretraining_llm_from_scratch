@@ -20,7 +20,22 @@ How to learn the reward function:
     - learn r_hat by minimizing ce between predictions and human labels.
 
 
+distributed preference learning
+  - divergent preferences
+    - Variational preference learning
+      - given a few preference labels from a particular user
+      -infer a latent user vector z
+      - train z conditional reward model to recover the true multimodal preference distribution
+      - => p(s_a > s_b | z)
+      -maximizing likelihood under this model is intractable due to the need to marginalize over unobserved z. so
+      introduce variational posterior and ELBO.
+      => **VAE reward model** that infers a latent z from a few preference queries.
 
+##reward modeling
+1) preference pairs
+2) bradley-terry loss
+3) label strategies
+4) dpo
 
 
 ```
