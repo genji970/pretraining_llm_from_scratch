@@ -56,7 +56,11 @@ class DecoderLanguageModel(nn.Module):
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
-    ) -> torch.Tensor:
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        dict[int, dict[str, torch.Tensor]],
+        ]:
         if input_ids.ndim != 2:
             raise ValueError(
                 "input_ids must have shape "
@@ -86,5 +90,11 @@ if __name__ == "__main__":
     input_ids = torch.randint(0, 32, (3, 7))
     attention_mask = torch.ones_like(input_ids)
 
-    logits = model(input_ids, attention_mask)
+    logits, aux_loss, router_infos = model(
+    input_ids,
+    attention_mask,
+    )
+
     print(f"logits.shape={tuple(logits.shape)}")
+    print(f"aux_loss={aux_loss}")
+    print(f"router_infos={router_infos}")

@@ -17,7 +17,7 @@ from data.load_data import (
 from model.model import DecoderLanguageModel
 from train.trainer import PretrainingTrainer
 
-from util.util import set_seed , Load_progress, save_progress_atomic
+from util.util import set_seed , load_progress, save_progress_atomic
 
 
 def run(config: TrainConfig) -> dict[str, float | int | str]:

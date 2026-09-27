@@ -351,12 +351,24 @@ class PretrainingTrainer:
                 )
 
                 self.optimizer.zero_grad(set_to_none=True)
-                logits = self.model(input_ids, attention_mask=attention_mask)
-                loss = self.loss_function(
+
+                logits, aux_loss, router_infos = self.model(
+                    input_ids,
+                    attention_mask=attention_mask,
+                )
+
+                lm_loss = self.loss_function(
                     logits.reshape(-1, logits.size(-1)),
                     labels.reshape(-1),
                 )
+
+                loss = (
+                    lm_loss
+                    + self.config.moe_aux_loss_coef * aux_loss
+                )
+
                 loss.backward()
+                
                 gradient_norm = torch.nn.utils.clip_grad_norm_(
                     self.model.parameters(),
                     max_norm=self.config.max_grad_norm,
