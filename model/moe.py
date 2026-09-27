@@ -95,9 +95,9 @@ class SparseMoE(nn.Module):
         x: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
 
-    """
-    x: [batch_size,sequence_length,embed_dim]
-    """
+        """
+        x: [batch_size,sequence_length,embed_dim]
+        """
         batch_size, sequence_length, embed_dim = x.shape
         if embed_dim != self.embed_dim:
             raise ValueError(
@@ -119,7 +119,7 @@ class SparseMoE(nn.Module):
         # -------------------------------------------------
 
         # [total_tokens,top_k]
-        router_weight, selected_experts=torch.topk(
+        routing_weight, selected_experts=torch.topk(
             router_prob,
             k=self.top_k,
             dim=-1,

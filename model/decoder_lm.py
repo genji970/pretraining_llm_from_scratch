@@ -40,7 +40,7 @@ class DecoderLanguageModel(nn.Module):
             num_head=num_head,
             dropout=dropout,
 
-            moe_layeres=moe_layers,
+            moe_layers=moe_layers,
             num_experts=num_experts,
             top_k=top_k,
             expert_hidden_dim=expert_hidden_dim,
