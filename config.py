@@ -30,6 +30,12 @@ class TrainConfig:
     num_heads: int
     dropout: float
 
+    # MoE 설정
+    moe_layers: list[int]
+    num_experts: int
+    top_k: int
+    expert_hidden_dim: int | None
+
     # Training
     output_dir: str
     epochs: int
@@ -41,6 +47,9 @@ class TrainConfig:
     early_stop_step: int
     device: str
     resume_from: str | None
+
+    # MoE training
+    moe_aux_loss_coef: float
 
     # Automatic early stopping
     early_stop_metric: str
@@ -126,6 +135,32 @@ def build_parser() -> argparse.ArgumentParser:
     model.add_argument("--num_heads", type=int, default=8)
     model.add_argument("--dropout", type=float, default=0.1)
 
+    model.add_argument(
+    "--moe_layers",
+    type=int,
+    nargs="*",
+    default=[],
+    help="0-based Transformer block indices that use MoE instead of dense FFN.",
+    )
+
+    model.add_argument(
+        "--num_experts",
+        type=int,
+        default=4,
+    )
+
+    model.add_argument(
+        "--top_k",
+        type=int,
+        default=2,
+    )
+
+    model.add_argument(
+        "--expert_hidden_dim",
+        type=int,
+        default=None,
+    )
+
     train = parser.add_argument_group("training")
     train.add_argument("--output_dir", type=str, default="outputs/chunked_pretrain")
     train.add_argument("--batch_size", type=int, default=8)
@@ -139,6 +174,13 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--learning_rate", type=float, default=2e-4)
     train.add_argument("--weight_decay", type=float, default=0.01)
     train.add_argument("--max_grad_norm", type=float, default=1.0)
+    
+    train.add_argument(
+        "--moe_aux_loss_coef",
+        type=float,
+        default=0.01,
+    )
+
     train.add_argument(
         "--log_every_steps",
         type=int,
@@ -317,6 +359,8 @@ def _validate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         "metrics_every_steps",
         "metric_smoothing_window",
         "max_plot_points",
+        "num_experts",
+        "top_k",
     )
     for name in positive_names:
         if getattr(args, name) <= 0:
@@ -336,6 +380,7 @@ def _validate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         "histogram_every_steps",
         "weight_decay",
         "dropout",
+        "moe_aux_loss_coef",
     )
     for name in nonnegative_names:
         if getattr(args, name) < 0:
@@ -365,7 +410,19 @@ def _validate(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
     if args.plot_every_steps > 0 and not args.save_plots:
         parser.error("--plot_every_steps requires --save_plots")
 
+    if args.top_k > args.num_experts:
+        parser.error("--top_k must be <= --num_experts")
 
+    if args.expert_hidden_dim is not None and args.expert_hidden_dim <= 0:
+        parser.error("--expert_hidden_dim must be positive")
+
+    for layer_idx in args.moe_layers:
+        if not 0 <= layer_idx < args.block_num:
+            parser.error(
+                f"--moe_layers contains invalid layer {layer_idx}; "
+                f"valid range is 0 to {args.block_num - 1}"
+            )
+            
 def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
     parser = build_parser()
     namespace = parser.parse_args(argv)

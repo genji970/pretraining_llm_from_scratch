@@ -1,5 +1,9 @@
 from __future__ import annotations
+
 import gc
+import json
+from pathlib import Path
+
 import torch
 from transformers import GPT2TokenizerFast
 
@@ -40,7 +44,13 @@ def run(config: TrainConfig) -> dict[str, float | int | str]:
         context_length=config.context_length,
         num_head=config.num_heads,
         dropout=config.dropout,
+
+        moe_layers=config.moe_layers,
+        num_experts=config.num_experts,
+        top_k=config.top_k,
+        expert_hidden_dim=config.expert_hidden_dim,
     )
+
     parameter_count = sum(parameter.numel() for parameter in model.parameters())
     print(f"parameters={parameter_count:,} tokenizer_vocab={len(tokenizer):,}")
 
