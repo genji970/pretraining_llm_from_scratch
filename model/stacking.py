@@ -17,10 +17,17 @@ class Stacking(nn.Module):
         context_length: int,
         num_head: int,
         dropout: float = 0.1,
+
+        moe_layers: list[int] | None = None,
+        num_experts: int = 4,
+        top_k: int = 2,
+        expert_hidden_dim: int | None = None,
     ) -> None:
         super().__init__()
         if block_num <= 0:
             raise ValueError("block_num must be positive")
+
+        moe_layers=set(moe_layers or [])
 
         self.transformer_block_list = nn.ModuleList(
             [
@@ -29,8 +36,13 @@ class Stacking(nn.Module):
                     context_length=context_length,
                     num_head=num_head,
                     dropout=dropout,
+
+                    use_moe=layer_idx in moe_layers,
+                    num_experts=num_experts,
+                    top_k=top_k,
+                    expert_hidden_dim=expert_hidden_dim,
                 )
-                for _ in range(block_num)
+                for layer_idx in range(block_num)
             ]
         )
 
@@ -39,9 +51,21 @@ class Stacking(nn.Module):
         x: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        for transformer_block in self.transformer_block_list:
-            x = transformer_block(x, attention_mask)
-        return x
+        total_aux_loss = x.new_zeros(())
+        router_infos = {}
+
+        for layer_idx, transformer_block in enumerate(
+            self.transformer_block_list
+        ):
+            x, aux_loss, router_info = transformer_block(
+                x, 
+                attention_mask,
+            )
+
+            if aux_loss is not None:
+                total_aux_loss = total_aux_loss + aux_loss
+                router_infos[layer_idx] = router_info
+        return x, total_aux_loss, router_infos
 
 
 if __name__ == "__main__":

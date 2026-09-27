@@ -18,6 +18,11 @@ class DecoderLanguageModel(nn.Module):
         context_length: int,
         num_head: int,
         dropout: float = 0.1,
+
+        moe_layers: list[int] | None = None,
+        num_experts: int = 4,
+        top_k: int =2,
+        expert_hidden_dim: int | None = None,
     ) -> None:
         super().__init__()
 
@@ -34,6 +39,11 @@ class DecoderLanguageModel(nn.Module):
             context_length=context_length,
             num_head=num_head,
             dropout=dropout,
+
+            moe_layeres=moe_layers,
+            num_experts=num_experts,
+            top_k=top_k,
+            expert_hidden_dim=expert_hidden_dim,
         )
         self.final_layernorm = nn.LayerNorm(embed_dim)
         self.proj = nn.Linear(
@@ -58,9 +68,10 @@ class DecoderLanguageModel(nn.Module):
             )
 
         x = self.token_embedding(input_ids)
-        x = self.blocks(x, attention_mask)
+        x, aux_loss, router_infos = self.blocks(x, attention_mask,)
         x = self.final_layernorm(x)
-        return self.proj(x)
+        logits=self.proj(x)
+        return logits, aux_loss, router_infos
 
 
 if __name__ == "__main__":
