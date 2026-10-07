@@ -1,7 +1,4 @@
-Repository for recording progress on implementing LLM pretraining from scratch.
-
-## In Progress
-future plan 1) model parallelism 2) deepspeed 3) flashattention 4)Big data process 5)moe
+For record, below document is not implemented in code.
 
 ### 1. Scaling
 ```text
